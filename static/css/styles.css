@@ -1,4 +1,79 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
+    background-color: #002147;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-container {
+    background-color: #003366;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 320px;
+}
+
+.login-container img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    background-color: #004080;
+    color: white;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.login-container input::placeholder {
+    color: #aad4ff;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #FFD700;
+    color: #002147;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    margin-top: 5px;
+}
+
+.login-container button:hover {
+    background-color: #ffea80;
+}
+
+.login-container a {
+    display: block;
+    margin-top: 15px;
+    color: #FFD700;
+    text-decoration: none;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #ff6b6b;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.hidden {
+    display: none;
 }

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp AIT - Чат</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .chat-container {
+            display: flex;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        
+        .sidebar {
+            width: 30%;
+            background-color: #003366;
+            color: white;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .main-content {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background-color: #004080;
+            color: white;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #e5e5e5;
+        }
+        
+        .message-input {
+            padding: 10px;
+            display: flex;
+            background-color: #f8f8f8;
+        }
+        
+        .message-input input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+        
+        .message-input button {
+            background-color: #FFD700;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+        
+        .user-info {
+            text-align: center;
+            padding: 10px;
+            border-bottom: 1px solid #FFD700;
+            margin-bottom: 10px;
+        }
+        
+        .chat-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .chat-item {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        
+        .chat-item:hover {
+            background-color: #004080;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <div class="user-info">
+                <h3>{{ session.get('nickname') }}</h3>
+                <a href="{{ url_for('logout') }}" style="color: #FFD700;">Выйти</a>
+            </div>
+            <ul class="chat-list">
+                <li class="chat-item">Демо чат</li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <div class="chat-header">
+                <h3>Демо чат</h3>
+            </div>
+            <div class="messages-container" id="messagesContainer">
+                <!-- Здесь будут сообщения -->
+                <div style="padding: 10px; background-color: #f0f0f0; border-radius: 10px; margin: 5px 0;">
+                    Добро пожаловать в WhatsApp AIT!
+                </div>
+            </div>
+            <div class="message-input">
+                <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                <button id="sendButton">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sendButton = document.getElementById('sendButton');
+            const messageInput = document.getElementById('messageInput');
+            const messagesContainer = document.getElementById('messagesContainer');
+
+            sendButton.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (!message) return;
+
+                const messageElement = document.createElement('div');
+                messageElement.style.padding = '10px';
+                messageElement.style.backgroundColor = '#dcf8c6';
+                messageElement.style.borderRadius = '10px';
+                messageElement.style.marginLeft = 'auto';
+                messageElement.style.maxWidth = '70%';
+                messageElement.style.marginBottom = '5px';
+                messageElement.style.marginTop = '5px';
+                messageElement.textContent = message;
+
+                messagesContainer.appendChild(messageElement);
+                messageInput.value = '';
+                
+                // Прокрутка чата вниз
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
