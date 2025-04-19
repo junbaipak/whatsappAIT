@@ -16,9 +16,9 @@ def init_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nickname TEXT NOT NULL,
+        nickname TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
-        profile_photo TEXT DEFAULT NULL,
+        profile_photo BLOB DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
@@ -80,6 +80,7 @@ def init_db():
         sender_id INTEGER NOT NULL,
         content TEXT NOT NULL,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_read BOOLEAN DEFAULT 0,
         FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE,
         FOREIGN KEY (sender_id) REFERENCES users (id)
     )
