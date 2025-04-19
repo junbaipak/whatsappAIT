@@ -108,6 +108,24 @@
         </div>
     </div>
 
+    <!-- Добавляем контекстное меню для чатов -->
+    <div class="context-menu" id="chatContextMenu">
+        <div class="context-menu-item" id="deleteChatMenuItem">
+            <span class="material-icons">delete</span> Удалить чат
+        </div>
+    </div>
+    
+    <!-- Добавляем контекстное меню для сообщений -->
+    <div class="context-menu" id="messageContextMenu">
+        <div class="context-menu-item" id="editMessageMenuItem">
+            <span class="material-icons">edit</span> Редактировать
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="deleteMessageMenuItem">
+            <span class="material-icons">delete</span> Удалить
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
     <script>
         // Добавляем данные пользователя в JavaScript

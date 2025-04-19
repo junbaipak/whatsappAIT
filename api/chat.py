@@ -272,3 +272,117 @@ def create_message(chat_id):
     }
     
     return jsonify({'success': True, 'message': message_info})
+
+@chat_bp.route('/api/chats/<int:chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    """Удалить чат"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Пользователь не авторизован'}), 401
+    
+    user_id = session['user_id']
+    
+    # Проверяем, что пользователь является участником этого чата
+    conn = get_db_connection()
+    is_member = conn.execute('''
+        SELECT 1 FROM dialogs 
+        WHERE chat_id = ? AND (user1_id = ? OR user2_id = ?)
+    ''', (chat_id, user_id, user_id)).fetchone()
+    
+    if not is_member:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Доступ запрещен'}), 403
+    
+    # Удаляем чат (каскадно удаляются диалоги и сообщения благодаря ON DELETE CASCADE)
+    conn.execute('DELETE FROM chats WHERE id = ?', (chat_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'Чат удален'})
+
+@chat_bp.route('/api/messages/<int:message_id>', methods=['DELETE'])
+def delete_message(message_id):
+    """Удалить сообщение"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Пользователь не авторизован'}), 401
+    
+    user_id = session['user_id']
+    
+    conn = get_db_connection()
+    # Проверяем, что пользователь является автором сообщения
+    message = conn.execute('''
+        SELECT m.chat_id, m.sender_id FROM messages m
+        WHERE m.id = ?
+    ''', (message_id,)).fetchone()
+    
+    if not message:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Сообщение не найдено'}), 404
+    
+    if message['sender_id'] != user_id:
+        # Проверяем, может ли пользователь удалить сообщение (только свои сообщения)
+        conn.close()
+        return jsonify({'success': False, 'message': 'Вы можете удалять только свои сообщения'}), 403
+    
+    # Удаляем сообщение
+    conn.execute('DELETE FROM messages WHERE id = ?', (message_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'Сообщение удалено'})
+
+@chat_bp.route('/api/messages/<int:message_id>', methods=['PUT'])
+def update_message(message_id):
+    """Обновить сообщение"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Пользователь не авторизован'}), 401
+    
+    user_id = session['user_id']
+    data = request.get_json()
+    
+    if not data or 'content' not in data:
+        return jsonify({'success': False, 'message': 'Не указано содержимое сообщения'}), 400
+    
+    new_content = data['content']
+    
+    conn = get_db_connection()
+    # Проверяем, что пользователь является автором сообщения
+    message = conn.execute('''
+        SELECT m.chat_id, m.sender_id, m.content FROM messages m
+        WHERE m.id = ?
+    ''', (message_id,)).fetchone()
+    
+    if not message:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Сообщение не найдено'}), 404
+    
+    if message['sender_id'] != user_id:
+        # Проверяем, может ли пользователь обновить сообщение (только свои сообщения)
+        conn.close()
+        return jsonify({'success': False, 'message': 'Вы можете редактировать только свои сообщения'}), 403
+    
+    # Обновляем сообщение
+    conn.execute('UPDATE messages SET content = ? WHERE id = ?', (new_content, message_id))
+    conn.commit()
+    
+    # Получаем обновленное сообщение для ответа
+    updated_message = conn.execute('''
+        SELECT m.id, m.content, m.sender_id, u.nickname as sender_name, m.timestamp
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.id = ?
+    ''', (message_id,)).fetchone()
+    
+    conn.close()
+    
+    message_info = {
+        'id': updated_message['id'],
+        'content': updated_message['content'],
+        'sender_id': updated_message['sender_id'],
+        'sender_name': updated_message['sender_name'],
+        'timestamp': datetime.strptime(updated_message['timestamp'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M'),
+        'timestamp_raw': updated_message['timestamp'],
+        'is_sent_by_me': True,
+        'is_edited': True
+    }
+    
+    return jsonify({'success': True, 'message': message_info})
