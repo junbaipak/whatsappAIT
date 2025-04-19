@@ -30,6 +30,13 @@ def home():
         return redirect(url_for('chat'))
     return render_template('index.html')
 
+@app.route('/profile')
+def profile():
+    # Проверяем, авторизован ли пользователь
+    if 'user_id' not in session:
+        return redirect(url_for('home'))
+    return render_template('profile.html')
+
 @app.route('/chat')
 def chat():
     # Проверяем, авторизован ли пользователь

@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, session, send_file, request
 import sqlite3
 from io import BytesIO
+import bcrypt
 
 user_bp = Blueprint('user', __name__)
 
@@ -116,3 +117,75 @@ def get_specific_user_photo(user_id):
         BytesIO(result['profile_photo']),
         mimetype='image/jpeg'
     )
+
+@user_bp.route('/api/user/update-photo', methods=['POST'])
+def update_user_photo():
+    """Обновляет фотографию профиля пользователя"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Не авторизован'}), 401
+    
+    if 'profile_photo' not in request.files:
+        return jsonify({'success': False, 'message': 'Файл не найден'}), 400
+    
+    profile_photo = request.files['profile_photo']
+    if not profile_photo.filename:
+        return jsonify({'success': False, 'message': 'Файл не выбран'}), 400
+    
+    # Проверка типа файла
+    if not profile_photo.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+        return jsonify({'success': False, 'message': 'Разрешены только изображения (PNG, JPG, GIF)'}), 400
+    
+    try:
+        # Чтение и сохранение изображения
+        profile_photo_data = profile_photo.read()
+        
+        conn = get_db_connection()
+        conn.execute('UPDATE users SET profile_photo = ? WHERE id = ?', 
+                    (profile_photo_data, session['user_id']))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Фото профиля обновлено'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Ошибка сохранения: {str(e)}'}), 500
+
+@user_bp.route('/api/user/update-password', methods=['POST'])
+def update_password():
+    """Обновляет пароль пользователя"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Не авторизован'}), 401
+    
+    data = request.get_json()
+    if not data or 'current_password' not in data or 'new_password' not in data:
+        return jsonify({'success': False, 'message': 'Неверные параметры запроса'}), 400
+    
+    current_password = data['current_password']
+    new_password = data['new_password']
+    
+    # Проверка длины нового пароля
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'message': 'Пароль должен содержать не менее 6 символов'}), 400
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT password FROM users WHERE id = ?', 
+                      (session['user_id'],)).fetchone()
+    
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Пользователь не найден'}), 404
+    
+    # Проверяем текущий пароль
+    if not bcrypt.checkpw(current_password.encode('utf-8'), user['password'].encode('utf-8')):
+        conn.close()
+        return jsonify({'success': False, 'message': 'Неверный текущий пароль'}), 401
+    
+    # Хешируем новый пароль
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Обновляем пароль
+    conn.execute('UPDATE users SET password = ? WHERE id = ?', 
+                (hashed_password, session['user_id']))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'Пароль успешно обновлен'})

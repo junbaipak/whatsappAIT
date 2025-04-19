@@ -31,6 +31,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Загружаем список чатов
         loadChats();
         
+        // Скрываем область ввода сообщений, пока не выбран чат
+        messageInputArea.style.display = 'none';
+        emptyChatMessage.style.display = 'flex';
+        
         // Добавляем обработчик для отправки сообщений
         if (sendMessageBtn && messageInput) {
             sendMessageBtn.addEventListener('click', sendMessage);
@@ -103,7 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     renderChats(data.chats);
-                    chats = data.chats;
                 } else {
                     console.error('Ошибка загрузки чатов:', data.message);
                 }
@@ -113,52 +116,76 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    function renderChats(chats) {
+    function renderChats(newChats) {
         if (!chatsList) return;
         
         // Сохраняем ID выбранного чата
         const selectedChatId = currentChatId;
         
-        // Очищаем список
-        chatsList.innerHTML = '';
+        // Создаем Map с существующими чатами для быстрого поиска
+        const existingChatsMap = new Map();
+        chats.forEach(chat => existingChatsMap.set(chat.id, chat));
         
-        // Сортируем чаты по времени последнего сообщения
-        chats.sort((a, b) => {
-            if (!a.timestamp_raw || !b.timestamp_raw) return 0;
-            return new Date(b.timestamp_raw) - new Date(a.timestamp_raw);
-        });
-        
-        // Добавляем чаты в список
-        chats.forEach(chat => {
-            const chatItem = document.createElement('li');
-            if (chat.id === selectedChatId) {
-                chatItem.classList.add('active');
+        // Обновляем только изменившиеся чаты, добавляем новые
+        newChats.forEach(newChat => {
+            const existingChat = existingChatsMap.get(newChat.id);
+            
+            // Если чата нет в списке или изменилось последнее сообщение, обновляем
+            if (!existingChat || existingChat.latest_message !== newChat.latest_message) {
+                // Удаляем старую версию чата из DOM, если она есть
+                const existingChatElement = document.querySelector(`[data-chat-id="${newChat.id}"]`);
+                if (existingChatElement) {
+                    existingChatElement.remove();
+                }
+                
+                // Добавляем новую версию чата
+                const chatItem = document.createElement('li');
+                chatItem.setAttribute('data-chat-id', newChat.id);
+                
+                if (newChat.id === selectedChatId) {
+                    chatItem.classList.add('active');
+                }
+                
+                const unreadBadge = newChat.unread ? `<div class="notification">•</div>` : '';
+                
+                chatItem.innerHTML = `
+                    <div class="user-info">
+                        <div class="avatar">
+                            <img src="${newChat.user_photo || '/static/images/default-profile.png'}" alt="Фото профиля">
+                        </div>
+                        <div class="user-details">
+                            <div class="username">${newChat.user_name}</div>
+                            <div class="last-message">${newChat.latest_message}</div>
+                        </div>
+                    </div>
+                    <div class="message-meta">
+                        <div class="timestamp">${newChat.timestamp}</div>
+                        ${unreadBadge}
+                    </div>
+                `;
+                
+                chatItem.addEventListener('click', function() {
+                    onChatClick(newChat);
+                });
+                
+                // Добавляем чат в DOM
+                chatsList.appendChild(chatItem);
             }
-            
-            const unreadBadge = chat.unread ? `<div class="notification">•</div>` : '';
-            
-            chatItem.innerHTML = `
-                <div class="user-info">
-                    <div class="avatar">
-                        <img src="${chat.user_photo || '/static/images/default-profile.png'}" alt="Фото профиля">
-                    </div>
-                    <div class="user-details">
-                        <div class="username">${chat.user_name}</div>
-                        <div class="last-message">${chat.latest_message}</div>
-                    </div>
-                </div>
-                <div class="message-meta">
-                    <div class="timestamp">${chat.timestamp}</div>
-                    ${unreadBadge}
-                </div>
-            `;
-            
-            chatItem.addEventListener('click', function() {
-                onChatClick(chat);
-            });
-            
-            chatsList.appendChild(chatItem);
         });
+        
+        // Сортируем чаты по времени последнего сообщения в DOM
+        Array.from(chatsList.children)
+            .sort((a, b) => {
+                const aChat = newChats.find(chat => chat.id === parseInt(a.getAttribute('data-chat-id')));
+                const bChat = newChats.find(chat => chat.id === parseInt(b.getAttribute('data-chat-id')));
+                
+                if (!aChat || !bChat || !aChat.timestamp_raw || !bChat.timestamp_raw) return 0;
+                return new Date(bChat.timestamp_raw) - new Date(aChat.timestamp_raw);
+            })
+            .forEach(node => chatsList.appendChild(node));
+        
+        // Обновляем список чатов в памяти
+        chats = newChats;
     }
     
     function onChatClick(chat) {
@@ -172,12 +199,12 @@ document.addEventListener('DOMContentLoaded', function() {
         chatUsername.textContent = chat.user_name;
         document.getElementById('chatProfilePhoto').querySelector('img').src = 
             chat.user_photo || '/static/images/default-profile.png';
-        chatStatus.textContent = 'В сети';
+        chatStatus.textContent = ''; // Убираем текст статуса "В сети"
         
         // Обновляем текущий ID чата
         currentChatId = chat.id;
         
-        // Скрываем сообщение пустого чата
+        // Скрываем сообщение пустого чата и показываем поле ввода
         emptyChatMessage.style.display = 'none';
         messageInputArea.style.display = 'flex';
         
@@ -362,9 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Автоматически выбираем новый чат
                 setTimeout(() => {
-                    const newChatItem = Array.from(chatsList.children).find(
-                        item => item.querySelector('.username').textContent === data.chat.user_name
-                    );
+                    const newChatItem = document.querySelector(`[data-chat-id="${data.chat.id}"]`);
                     if (newChatItem) {
                         newChatItem.click();
                     }

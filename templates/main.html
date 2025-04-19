@@ -10,11 +10,22 @@
 <body>
     <div class="sidebar">
         <div class="sidebar-header">
-            <div class="avatar">
+            <div class="avatar user-profile-avatar">
                 <img src="{{ url_for('get_user_photo_route') }}" alt="Ваше фото">
+                <div class="profile-hover-overlay">
+                    <span class="material-icons">account_circle</span>
+                </div>
             </div>
-            <div class="menu-button">
+            <div class="menu-button" id="menuButton">
                 <span class="material-icons">more_vert</span>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/profile" class="menu-item">
+                        <span class="material-icons">person</span> Профиль
+                    </a>
+                    <a href="/logout" class="menu-item">
+                        <span class="material-icons">logout</span> Выйти
+                    </a>
+                </div>
             </div>
         </div>
         <div class="search-container">
@@ -36,7 +47,7 @@
             </div>
             <div class="user-details">
                 <div class="username" id="chatUsername">Выберите чат</div>
-                <div class="status" id="chatStatus">-</div>
+                <div class="status" id="chatStatus"></div>
             </div>
         </div>
         
@@ -47,7 +58,7 @@
             </div>
         </div>
         
-        <div class="input-area" id="messageInputArea">
+        <div class="input-area" id="messageInputArea" style="display: none;">
             <input type="text" placeholder="Введите сообщение..." id="messageInput">
             <button id="sendMessageBtn">
                 <span class="material-icons">send</span>
@@ -93,5 +104,26 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Добавляем обработчик клика на аватар пользователя для перехода на страницу профиля
+            document.querySelector('.user-profile-avatar').addEventListener('click', function() {
+                window.location.href = '/profile';
+            });
+            
+            // Обработчик для выпадающего меню
+            const menuButton = document.getElementById('menuButton');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            
+            menuButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', function() {
+                dropdownMenu.classList.remove('active');
+            });
+        });
+    </script>
 </body>
 </html>
