@@ -17,12 +17,14 @@ body {
     flex-direction: column;
 }
 
+/* Обновляем стиль sidebar-header для корректного расположения элементов */
 .sidebar-header {
-    padding: 15px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #2a334d;
+    align-items: center;
+    padding: 10px 16px;
+    background-color: #1a2236; /* Меняем на темный фон */
+    border-bottom: 1px solid #2a334d; /* Добавляем нижнюю границу */
 }
 
 .search-container {
@@ -547,4 +549,22 @@ body {
 .menu-item .material-icons {
     margin-right: 10px;
     font-size: 18px;
+}
+
+/* Добавляем стили для отображения имени текущего пользователя */
+.user-profile-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1; /* Позволяем элементу расширяться */
+}
+
+.current-user-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: white; /* Меняем цвет на белый для лучшей читаемости на темном фоне */
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

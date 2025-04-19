@@ -91,8 +91,18 @@ def login():
     
     # Проверка пароля
     if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+        # Сохраняем данные пользователя в сессию
         session['user_id'] = user['id']
         session['nickname'] = user['nickname']
-        return jsonify({"success": True, "message": "Авторизация успешна"})
+        session['current_user_name'] = user['nickname']  # Добавляем для быстрого доступа
+        
+        return jsonify({
+            "success": True, 
+            "message": "Авторизация успешна",
+            "user": {
+                "id": user['id'],
+                "nickname": user['nickname']
+            }
+        })
     else:
         return jsonify({"success": False, "message": "Неверный логин или пароль"}), 401

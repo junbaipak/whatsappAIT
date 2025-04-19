@@ -10,10 +10,15 @@
 <body>
     <div class="sidebar">
         <div class="sidebar-header">
-            <div class="avatar user-profile-avatar">
-                <img src="{{ url_for('get_user_photo_route') }}" alt="Ваше фото">
-                <div class="profile-hover-overlay">
-                    <span class="material-icons">account_circle</span>
+            <div class="user-profile-info">
+                <div class="avatar user-profile-avatar">
+                    <img src="{{ url_for('get_user_photo_route') }}" alt="Ваше фото">
+                    <div class="profile-hover-overlay">
+                        <span class="material-icons">account_circle</span>
+                    </div>
+                </div>
+                <div class="current-user-name" id="currentUserName">
+                    {{ username }}
                 </div>
             </div>
             <div class="menu-button" id="menuButton">
@@ -105,6 +110,9 @@
 
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
     <script>
+        // Добавляем данные пользователя в JavaScript
+        const currentUsername = "{{ username }}";
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Добавляем обработчик клика на аватар пользователя для перехода на страницу профиля
             document.querySelector('.user-profile-avatar').addEventListener('click', function() {
@@ -123,6 +131,11 @@
             document.addEventListener('click', function() {
                 dropdownMenu.classList.remove('active');
             });
+            
+            // Если текущее имя доступно и элемент существует, обновляем его
+            if (currentUsername && document.getElementById('currentUserName')) {
+                document.getElementById('currentUserName').textContent = currentUsername;
+            }
         });
     </script>
 </body>

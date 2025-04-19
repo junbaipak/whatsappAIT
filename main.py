@@ -42,7 +42,10 @@ def chat():
     # Проверяем, авторизован ли пользователь
     if 'user_id' not in session:
         return redirect(url_for('home'))
-    return render_template('main.html')
+    
+    # Передаем имя пользователя в шаблон
+    username = session.get('nickname', 'Пользователь')
+    return render_template('main.html', username=username)
 
 @app.route('/main')
 def main_route():

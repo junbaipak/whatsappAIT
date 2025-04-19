@@ -189,3 +189,31 @@ def update_password():
     conn.close()
     
     return jsonify({'success': True, 'message': 'Пароль успешно обновлен'})
+
+@user_bp.route('/api/users/current', methods=['GET'])
+def get_current_user():
+    """Получает информацию о текущем авторизованном пользователе"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Не авторизован'}), 401
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT id, nickname FROM users WHERE id = ?', 
+                      (session['user_id'],)).fetchone()
+    conn.close()
+    
+    if not user:
+        return jsonify({'success': False, 'message': 'Пользователь не найден'}), 404
+    
+    # Проверка наличия фото
+    has_photo = get_user_photo_exists(user['id'])
+    photo_url = f'/api/user/photo' if has_photo else None
+    
+    return jsonify({
+        'success': True, 
+        'user': {
+            'id': user['id'], 
+            'nickname': user['nickname'],
+            'name': user['nickname'],  # Используем nickname как name для совместимости
+            'photo': photo_url
+        }
+    })
